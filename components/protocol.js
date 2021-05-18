@@ -21,18 +21,18 @@ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 License for the specific language governing rights and limitations
 under the License.
 
-The Original Code is the OverbiteFF Gopher addon.
+The Original Code is the gmnexpl Gemini addon.
 
 The Initial Developer of the Original Code is Cameron Kaiser.
 Portions created by Cameron Kaiser are Copyright (C) 2008
 Cameron Kaiser. All Rights Reserved. Copyright (C) 2008 Contributors
-to the Overbite Project.
+to the GmnExpl Project.
 
 For users under the GNU Public License:
 
-OverbiteFF Gopher/CSO Firefox addon
+gmnexpl Gemini/CSO Firefox addon
 Copyright (C) 2008 Cameron Kaiser
-Copyright (C) 2008 Contributors to the Overbite Project
+Copyright (C) 2008 Contributors to the GmnExpl Project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -50,9 +50,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 For users under the GNU Lesser General Public License:
 
-OverbiteFF Gopher/CSO Firefox addon
+gmnexpl Gemini/CSO Firefox addon
 Copyright (C) 2008 Cameron Kaiser
-Copyright (C) 2008 Contributors to the Overbite Project
+Copyright (C) 2008 Contributors to the GmnExpl Project
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -69,17 +69,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 [ or http://www.gnu.org/licenses/lgpl-2.1.html ]
 
 */
-const OBFFVERS = 1.1; 
-const OBFFBUILD = 1424;
-const OBFFBUILDPREF = "extensions.overbiteff.buildmark";
-const OBFFDOTLESSPREF = "extensions.overbiteff.dotless";
-const OBFFSCHEME = "gopher";
-const OBFFCHROMEURL = "chrome://overbiteff";
-const OBFFABOUTURL = (OBFFCHROMEURL + "/content/infobabe.html");
-const OBFFIABOUTURL = "about:overbite";
-const OBFFRABOUTURL = (OBFFCHROMEURL + "/content/startpage.html");
-const OBFFPROT_HANDLER_CONTRACTID = "@mozilla.org/network/protocol;1?name="+OBFFSCHEME;
-const OBFFPROT_HANDLER_CID = Components.ID("{977ffc4c-a635-433d-8477-ea575bfb7b19}");
+const GMNXVERS = 1.1; 
+const GMNXBUILD = 1424;
+const GMNXBUILDPREF = "extensions.gmnexpl.buildmark";
+const GMNXDOTLESSPREF = "extensions.gmnexpl.dotless";
+const GMNXSCHEME = "gemini";
+const GMNXCHROMEURL = "chrome://gmnexpl";
+const GMNXABOUTURL = (GMNXCHROMEURL + "/content/infobabe.html");
+const GMNXIABOUTURL = "about:gmnexpl";
+const GMNXRABOUTURL = (GMNXCHROMEURL + "/content/startpage.html");
+const GMNXPROT_HANDLER_CONTRACTID = "@mozilla.org/network/protocol;1?name="+GMNXSCHEME;
+const GMNXPROT_HANDLER_CID = Components.ID("{977ffc4c-a635-433d-8477-ea575bfb7b19}");
 
 const nsISupports = Components.interfaces.nsISupports;
 const nsIRequest = Components.interfaces.nsIRequest;
@@ -99,18 +99,17 @@ const nsIEventQueueService = Components.interfaces.nsIEventQueueService;
 /* port control */
 // 80 is okay because of some hybrid servers that can speak both on one port
 //var badports = [ 20,21,22,23,25,53,69,111,115,137,138,139,443,513,514,548 ];
-var alwayslet = [ 13, 43, 70, 71, 72, 79, 80, 105, 1070, 2347, 3000, 3099,
-	4323, 7055, 7070, 7071, 7072, 7077, 7080, 7777, 27070 ];
+var alwayslet = [ 1965 ];
 
 /* global function for logging to the error console */
-function OverbiteLog(msg, error) {
+function GmnExplLog(msg, error) {
 
-	return Components.results.NS_OK; // comment out for logging
+//	return Components.results.NS_OK; // comment out for logging
 
         var consoleService = Components.
 		classes["@mozilla.org/consoleservice;1"]
 		.getService(Components.interfaces.nsIConsoleService);
-	msg = "OverbiteFF says: "+msg;
+	msg = "gmnexpl says: "+msg;
 	if (error) {
 		consoleService.logStringError(msg);
 	} else {
@@ -122,7 +121,7 @@ function OverbiteLog(msg, error) {
    you mean I have to implement my own NS_QueryNotificationCallbacks?
    so what do I have XPConnect for anyway?!
    rot in hell. */
-function OverbiteQNC(one, two, three) {
+function GmnExplQNC(one, two, three) {
 	var progsink = null;
 
 	if (three)
@@ -147,8 +146,8 @@ function OverbiteQNC(one, two, three) {
  * text/plain.
 */
 
-function OverbiteDotless() { }
-OverbiteDotless.prototype = {
+function GmnExplDotless() { }
+GmnExplDotless.prototype = {
 
 	// my stuff
 	_contentType: null,
@@ -237,8 +236,7 @@ OverbiteDotless.prototype = {
 
 		if (!this._sstream) {
 			// create (and cache) our scriptable input stream
-			// note: this is NOT BINARY SAFE (but Gopher is
-			//	mostly 7-bit)
+			// note: this is NOT BINARY SAFE
 			this._sstream = Components
 				.classes["@mozilla.org/scriptableinputstream;1"]
 				.createInstance(Components
@@ -284,8 +282,8 @@ OverbiteDotless.prototype = {
  * offers.
 */
 
-function OverbiteDirconv() { }
-OverbiteDirconv.prototype = {
+function GmnExplDirconv() { }
+GmnExplDirconv.prototype = {
 
 	// my stuff
 	_listener : null,
@@ -311,7 +309,7 @@ OverbiteDirconv.prototype = {
 	_bundle : Components.classes["@mozilla.org/intl/stringbundle;1"]
 		.getService(Components
 			.interfaces.nsIStringBundleService)
-		.createBundle(OBFFCHROMEURL + "/locale/itypes.properties"),
+		.createBundle(GMNXCHROMEURL + "/locale/itypes.properties"),
 	_getL10NString : function(msg, args) {
 		var q;
 
@@ -359,8 +357,8 @@ OverbiteDirconv.prototype = {
 		return wout;
 	},
 	_URLfromSel : function(host, port, itype, sel) {
-		var suburl = OBFFSCHEME + '://' + host
-			+ ((port != 70)?(':'+port): '')
+		var suburl = GMNXSCHEME + '://' + host
+			+ ((port != 1965)?(':'+port): '')
 			+ '/' + encodeURI(itype + sel);
 		;
 		return suburl;
@@ -391,11 +389,11 @@ OverbiteDirconv.prototype = {
 					whoami.path != "/1/") {
 				var rooturl = this._URLfromSel(whoami.host,
 					((whoami.port && whoami.port > 0)
-						? whoami.port : 70),
+						? whoami.port : 1965),
 					'1', '');
 				rootbutt =
 '<div id = "buttonarea"><a href = "' + rooturl + '">' +
-'<img class = "gicon" src = "gopher:///internal-root.png" '+
+'<img class = "gicon" src = "gemini:///internal-root.png" '+
 'alt="[' + this._getL10NString('backpath') + ']" '+
 'title="[' + this._getL10NString('backpath') + ']"></a></div>' +
 "\n";
@@ -419,11 +417,11 @@ OverbiteDirconv.prototype = {
 ' "http://www.w3.org/TR/html4/strict.dtd">' + "\n" +
 "<html>\n"+
 "<head>\n"+
-'<link rel="stylesheet" href = "gopher:///internal-gopherchrome.css" ' +
+'<link rel="stylesheet" href = "gemini:///internal-geminichrome.css" ' +
 	'type="text/css"/>' + "\n" +
-'<link rel="icon" href = "gopher:///internal-favicon.png" '+
+'<link rel="icon" href = "gemini:///internal-favicon.png" '+
 	'type="image/png"/>' + "\n" +
-"<title>Gopher document" + twhoami + "</title>\n"+
+"<title>Gemini document" + twhoami + "</title>\n"+
 "</head>\n"+
 "<body>\n"+
 '<div id = "topbar">'+
@@ -470,8 +468,7 @@ rootbutt +
 
 		if (!this._sstream) {
 			// create (and cache) our scriptable input stream
-			// note: this is NOT BINARY SAFE (but Gopher is
-			//	mostly 7-bit)
+			// note: this is NOT BINARY SAFE
 			this._sstream = Components
 				.classes["@mozilla.org/scriptableinputstream;1"]
 				.createInstance(Components
@@ -511,7 +508,7 @@ rootbutt +
 			var icalt = (this._itypes.indexOf(itype) > -1)
 				? this._getL10NString(itype)
 				: this._getL10NString('unknown');
-			var iconbase = "gopher:///internal-";
+			var iconbase = "gemini:///internal-";
 
 			if (itype == "'" || itype == '"') {
 				// these are just going to cause all kinds of
@@ -628,15 +625,13 @@ rootbutt +
  * the channel object that actually does the protocol negotiation.
 */
 
-function OverbiteChannel(input_uri, proxyinfo) {
+function GmnExplChannel(input_uri, proxyinfo) {
 	this.init(input_uri, proxyinfo);
 }
 
-OverbiteChannel.prototype = {
+GmnExplChannel.prototype = {
 
 	// my stuff
-	_itemtype : null,
-	_selector : null,
 	_host : null,
 	_port : null,
 	_transport : null,
@@ -711,28 +706,16 @@ OverbiteChannel.prototype = {
 		if (proxyinfo)
 			this._proxyinfo = proxyinfo;
 
-		// process item type and set contentType
-		var sel = decodeURI(input_uri.path);
-		if (sel == null || !sel.length || sel == '/') {
-			this._itemtype = '1';
-			this._selector = '';
-		} else if (sel.length == 1) {
-			this._itemtype = sel;
-			this._selector = '';
-		} else {
-			this._itemtype = sel.substr(1,1);
-			this._selector = sel.substr(2);
-		}
-
 		if (!input_uri.host || !input_uri.host.length)
 			throw Components.results.NS_ERROR_MALFORMED_URI;
 		else
 			this._host = input_uri.host;
 		if (!input_uri.port || input_uri.port < 1)
-			this._port = 70;
+			this._port = 1965;
 		else
 			this._port = input_uri.port;
 
+if(0){
 		// force our itemtype. realistically, the old Gopher let people
 		// slide a lot with content sniffing, but that's not going to
 		// happen anymore. this is written to be as rigid as possible
@@ -815,12 +798,12 @@ OverbiteChannel.prototype = {
 				break;
 		}
 		this.contentType = c;
-				
-		OverbiteLog(("channel initialized: "+
+}
+		this.contentType = 'text/plain';
+
+		GmnExplLog(("channel initialized: "+
 			this._host + " " +
 			this._port + " " +
-			this._itemtype + " " +
-			this._selector + " " +
 			""));
 		return Components.results.NS_OK;
 	},
@@ -831,14 +814,14 @@ OverbiteChannel.prototype = {
 	},
 
 	asyncOpen : function (listener, context) {
-		OverbiteLog(("trying to initialize transport"));
+		GmnExplLog(("trying to initialize transport"));
 
 		var transportService = Components
 		.classes["@mozilla.org/network/socket-transport-service;1"]
 			.getService(Components
 				.interfaces.nsISocketTransportService);
 		this._transport = transportService
-			.createTransport(null, 0,
+			.createTransport(['ssl'], 1,
 				this._host,
 				this._port,
 				this._proxyinfo);
@@ -859,7 +842,7 @@ OverbiteChannel.prototype = {
 
 
 
-			OverbiteLog("yes, we have sink "+cq);
+			GmnExplLog("yes, we have sink "+cq);
 			this._transport.setEventSink(this, cq);
 		}
 		// open and initialize the data pump to read from the socket
@@ -874,18 +857,19 @@ OverbiteChannel.prototype = {
 		this._pump.asyncRead(this, null);
 		if (this._loadGroup) {
 			this._loadGroup.addRequest(this, null);
-			OverbiteLog("load group added");
+			GmnExplLog("load group added");
 		}
 		this.isPending = true;
 		this._listener = listener;
 		this._context = context;
 
+if(0){
 		// push on another content listener (in this case us) for
 		// those itemtypes requiring translation to something else
 		var transitives = [ '1', '7' ]; // item types for translation
 		if (transitives.indexOf(this._itemtype) > -1) {
-			OverbiteLog(("this type requires translation"));
-			var dirconv = new OverbiteDirconv();
+			GmnExplLog(("this type requires translation"));
+			var dirconv = new GmnExplDirconv();
 			dirconv.asyncConvertData(
 				'application/x-overbite-gopher-dir',
 				'text/html',
@@ -893,28 +877,29 @@ OverbiteChannel.prototype = {
 				this._context);
 			this._listener = dirconv;
 			this._context = null;
-			OverbiteLog(("now with dirconv: "+dirconv));
+			GmnExplLog(("now with dirconv: "+dirconv));
 		}	
+}
 		// dotless conversion
 		var prefs = Components
 			.classes["@mozilla.org/preferences-service;1"]
 			.getService(Components.interfaces.nsIPrefBranch);
 		var do_dotless = true;
 		// first load hidden preference for dotless
-		if (prefs.getPrefType(OBFFDOTLESSPREF) == prefs.PREF_BOOL) {
-			do_dotless = prefs.getBoolPref(OBFFDOTLESSPREF);
-			OverbiteLog(("dotless has been set to "+do_dotless));
+		if (prefs.getPrefType(GMNXDOTLESSPREF) == prefs.PREF_BOOL) {
+			do_dotless = prefs.getBoolPref(GMNXDOTLESSPREF);
+			GmnExplLog(("dotless has been set to "+do_dotless));
 			// otherwise default is true
 		} else {
-			OverbiteLog(("no "+OBFFDOTLESSPREF+" not bool"));
+			GmnExplLog(("no "+GMNXDOTLESSPREF+" not bool"));
 		}
 		if (do_dotless && (
 				this.contentType.match(/^text\//) ||
 				this.contentType == 'application/xml' ||
 				this.contentType == 'image/svg+xml' ||
 			0)) {
-			OverbiteLog("this type needs to be dotless");
-			var dotless = new OverbiteDotless();
+			GmnExplLog("this type needs to be dotless");
+			var dotless = new GmnExplDotless();
 			dotless.asyncConvertData(
 				'generic/dotless-type',
 				this.contentType,
@@ -922,9 +907,9 @@ OverbiteChannel.prototype = {
 				this._context);
 			this._listener = dotless;
 			this._context = null;
-			OverbiteLog(("now with dotless: "+dotless));
+			GmnExplLog(("now with dotless: "+dotless));
 		}
-		OverbiteLog(("transport service for "+
+		GmnExplLog(("transport service for "+
 			this._host + " initialized"));
 		return Components.results.NS_OK;
 	},
@@ -958,10 +943,10 @@ OverbiteChannel.prototype = {
 		if (this._listener)
 			this._listener.onStartRequest(this,
 				this._context);
-		OverbiteLog(("onStartRequest"+this._listener));
+		GmnExplLog(("onStartRequest"+this._listener));
 	},
 	onStopRequest : function(request, context, status) {
-		OverbiteLog(("onStopRequest: "+status));
+		GmnExplLog(("onStopRequest: "+status));
 		if(Components.isSuccessCode(status))
 			this.status = status;
 
@@ -969,7 +954,7 @@ OverbiteChannel.prototype = {
 			this._listener.onStopRequest(this,
 					this._context,
 					this.status);
-			OverbiteLog("listener stopped");
+			GmnExplLog("listener stopped");
 			this._listener = null;
 			this._context = null;
 		}
@@ -977,7 +962,7 @@ OverbiteChannel.prototype = {
 			this._loadGroup.removeRequest(this,
 				context, // null,
 				this.status);
-			OverbiteLog("load group stopped");
+			GmnExplLog("load group stopped");
 		}
 
 		this._pump = null;
@@ -986,13 +971,13 @@ OverbiteChannel.prototype = {
 		this.notificationCallbacks = null; // use our own getter/setter
 		this._progsink = null;
 
-		OverbiteLog("end of request");
+		GmnExplLog("end of request");
 		// lookit nsNetError.h
 		return Components.results.NS_OK;
 	},
 	onDataAvailable : function(request, context, inputStream, offset,
 			count) {
-		OverbiteLog(("data event"));
+		GmnExplLog(("data event"));
 		if (this._listener) {
 			this._listener.onDataAvailable(this,
 					this._context,
@@ -1000,11 +985,12 @@ OverbiteChannel.prototype = {
 					offset,
 					count);
 		}
-		OverbiteLog(("data available: "+count+" bytes"));
+		GmnExplLog(("data available: "+count+" bytes"));
 	},
 	sendRequest : function() {
-		var transtring = this._selector;
+		var transtring = this.URI.asciiSpec;
 
+if(0){
 		// the original version put up the itemtype 7 dialogue
 		// at the channel, but I like throwing ABORTs early,
 		// so we're doing that at the protocol handler level.
@@ -1018,11 +1004,16 @@ OverbiteChannel.prototype = {
 				transtring=this.csoargs;
 		} else if (this.queryargs && this.queryargs.length)
 			transtring += "\t" + this.queryargs;
+}
 		transtring += "\r\n";
+if(0){
 		// add terminating quit command to our query just in case
 		// if this is CSO/ph
 		if (this._itemtype == "2")
 			transtring += "quit\r\n";
+}
+
+		GmnExplLog(("transtring = "+transtring));
 
 		// send the data
 		var outstream = this._transport
@@ -1030,14 +1021,14 @@ OverbiteChannel.prototype = {
 		outstream.write(transtring, transtring.length);
 		this.transreq = transtring; // for debugging
 		outstream.close();
-		OverbiteLog("selector sent: "+escape(transtring));
+		GmnExplLog("selector sent: "+escape(transtring));
 	},
 	onTransportStatus : function(trans, status, prog, progmax) {
-		this._progsink = OverbiteQNC(this, this._loadGroup,
+		this._progsink = GmnExplQNC(this, this._loadGroup,
 				this._progsink);
 		if (!this._progsink)
-			OverbiteLog(("crap: no progsink"));
-		OverbiteLog(("status changed: "+status+this._loadGroup+
+			GmnExplLog(("crap: no progsink"));
+		GmnExplLog(("status changed: "+status+this._loadGroup+
 			this.notificationCallbacks+this._progsink));
 		if (this._progsink &&
 		// wtf?! this doesn't work, so I'm commenting it out
@@ -1048,7 +1039,7 @@ OverbiteChannel.prototype = {
 				this._context,
 				status,
 				this.URI.asciiHost);
-			OverbiteLog(("onStatus"));
+			GmnExplLog(("onStatus"));
 			
 			if (status == nsISocketTransport.STATUS_RECEIVING_FROM
 				||
@@ -1057,7 +1048,7 @@ OverbiteChannel.prototype = {
 				this._progsink.onProgress(this,
 					this._context,
 					prog, -1);
-				OverbiteLog(("onProgress"));
+				GmnExplLog(("onProgress"));
 			}
 		}
 		return Components.results.NS_OK;
@@ -1065,9 +1056,9 @@ OverbiteChannel.prototype = {
 
 };
 	
-function OverbiteProtocol() { }
+function GmnExplProtocol() { }
 
-OverbiteProtocol.prototype = {
+GmnExplProtocol.prototype = {
 	QueryInterface : function(iid) {
 		if (!iid.equals(nsIProtocolHandler) &&
 				!iid.equals(nsIProxiedProtocolHandler) &&
@@ -1083,7 +1074,7 @@ OverbiteProtocol.prototype = {
 	_bundle : Components.classes["@mozilla.org/intl/stringbundle;1"]
 		.getService(Components
 			.interfaces.nsIStringBundleService)
-		.createBundle(OBFFCHROMEURL + "/locale/obff.properties"),
+		.createBundle(GMNXCHROMEURL + "/locale/obff.properties"),
 	_getL10NString : function(msg, args) {
 		if (args) 
 			return this._bundle.formatStringFromName(msg, args,
@@ -1093,8 +1084,8 @@ OverbiteProtocol.prototype = {
 	},
 
 	// nsIProtocolHandler
-	scheme: OBFFSCHEME,
-	defaultPort: 70,
+	scheme: GMNXSCHEME,
+	defaultPort: 1965,
 	protocolFlags: 0
 			//| nsIProtocolHandler.URI_NORELATIVE
 			| nsIProtocolHandler.ALLOWS_PROXY
@@ -1108,7 +1099,7 @@ OverbiteProtocol.prototype = {
 	allowPort : function(port, scheme) {
 		// explicitly overridden -- these are common
 		// and should never be blacklisted
-		// we also include whois, finger and CSO/ph since gopher
+		// we also include whois, finger and CSO/ph since gemini
 		// necessarily subsumes all of those protocols very easily
 		return (alwayslet.indexOf(port) != -1);
 	},
@@ -1123,7 +1114,7 @@ OverbiteProtocol.prototype = {
 	},
 
 	newChannel : function(input_uri) {
-		OverbiteLog("new request for "+input_uri.asciiSpec);
+		GmnExplLog("new request for "+input_uri.asciiSpec);
 		return this.newProxiedChannel(input_uri, null);
 	},
 
@@ -1138,16 +1129,16 @@ OverbiteProtocol.prototype = {
 			.getService(Components
 				.interfaces.nsIPromptService);
 
-		OverbiteLog("new proxied request for "+input_uri.asciiSpec);
+		GmnExplLog("new proxied request for "+input_uri.asciiSpec);
 		if (proxyinfo)
-			OverbiteLog("proxy is: "+proxyinfo);
+			GmnExplLog("proxy is: "+proxyinfo);
 
 		// handle hURLs directly here (and reject Javascript
 			// and data:)
 		if (input_uri.path.match(/^\/?h\/?URL:.+/)) {
 			var newuri = input_uri.path.replace(
 				/^\/?h\/?URL:\/?/, "");
-			OverbiteLog("URL REDIRECT: "+newuri);
+			GmnExplLog("URL REDIRECT: "+newuri);
 
 			// reject unsafe destination schemes
 			if (newuri.match(/^javascript:/) ||
@@ -1172,7 +1163,8 @@ OverbiteProtocol.prototype = {
 				wm.getMostRecentWindow('navigator:browser')
 					.getBrowser().webNavigation.loadURI(
 						newuri, 0, null, null, null);
-				// this is a bit cheap, but we don't want					// FF freaking that we didn't give it a channel
+				// this is a bit cheap, but we don't want
+				// FF freaking that we didn't give it a channel
 				throw Components.results.NS_ERROR_ABORT;
 				return null; // above will do redirect
 			} else {
@@ -1201,7 +1193,7 @@ OverbiteProtocol.prototype = {
 			}
 			// stuff query into channel query args rather than
 			// kludging it into a URL
-			var ob = new OverbiteChannel(input_uri, proxyinfo);
+			var ob = new GmnExplChannel(input_uri, proxyinfo);
 			ob.queryargs = query.value;
 			return ob;
 		}
@@ -1228,19 +1220,19 @@ OverbiteProtocol.prototype = {
 				return null;
 			}
 			// stuff query into channel csoargs
-			var ob = new OverbiteChannel(input_uri, proxyinfo);
+			var ob = new GmnExplChannel(input_uri, proxyinfo);
 			ob.csoargs = query.value;
 			return ob;
 		}
 			
 		// make chrome channel either to images or CSS if
-		// input_uri is "gopher:///internal-" and no / and
+		// input_uri is "gemini:///internal-" and no / and
 		// extension is .png or .css
 		if (!input_uri.host.length &&
 				// PARANOIA STRIKES DEEP IN THE HEARTLAND!!!1
 				!input_uri.path.substr(1).match(/\//) &&
 		input_uri.path.match(/^\/internal-[^/ ]+\.(css|png)$/)) {
-			OverbiteLog("handling internal chrome: "
+			GmnExplLog("handling internal chrome: "
 				+input_uri.asciiSpec);
 			var IURL;
 			var mpath = input_uri.path.substr(1)
@@ -1254,14 +1246,14 @@ OverbiteProtocol.prototype = {
 
 			var uprof = dirService.get(
 				"ProfD", Components.interfaces.nsIFile);
-			var basedir = "gopherchrome";
+			var basedir = "geminichrome";
 			//uprof.appendRelativePath(basedir);
 			uprof.append(basedir);
 
 			if (uprof.exists() && uprof.isDirectory()) {
-				// use the user's gopherchrome directory for
+				// use the user's geminichrome directory for
 				// CSS and icons
-				OverbiteLog("trying user directory");
+				GmnExplLog("trying user directory");
 				var fileProServ = Components
 					.classes["@mozilla.org/network/io-service;1"]
 					.getService(Components
@@ -1277,11 +1269,11 @@ OverbiteProtocol.prototype = {
 						uprof);
 			}
 			if (!IURL) {
-				OverbiteLog("trying internal chrome dir");
-				IURL = OBFFCHROMEURL+ "/content/chrome/"
+				GmnExplLog("trying internal chrome dir");
+				IURL = GMNXCHROMEURL+ "/content/chrome/"
 					+mpath;
 			}
-			OverbiteLog("resulting URL: "+IURL);
+			GmnExplLog("resulting URL: "+IURL);
 			return ioService.newChannel(IURL, null, null);
 		}
 
@@ -1289,10 +1281,10 @@ OverbiteProtocol.prototype = {
 		// make chrome channel to about page if
 			// input_uri lacks a hostname
 		if (!input_uri.host.length) {
-			OverbiteLog("internal about page served up instead");
-			OverbiteSetPrefs(); // sigh
+			GmnExplLog("internal about page served up instead");
+			GmnExplSetPrefs(); // sigh
 			return ioService.newChannel(
-				OBFFABOUTURL,
+				GMNXABOUTURL,
 				null, null);
 		}
 
@@ -1313,15 +1305,15 @@ OverbiteProtocol.prototype = {
 		//if (badports.indexOf(input_uri.port) > -1) {
 		if (input_uri.port && input_uri.port >= 0
 				&& alwayslet.indexOf(input_uri.port)== -1) {
-			OverbiteLog("illegal port: "+input_uri.port);
+			GmnExplLog("illegal port: "+input_uri.port);
 			throw Components.results
 				.NS_ERROR_PORT_ACCESS_NOT_ALLOWED;
 			return null;
 		}
 
-		// else it's a legit gopher request
-		// make our channel and gopher it
-		return new OverbiteChannel(input_uri, proxyinfo);
+		// else it's a legit gemini request
+		// make our channel and gemini it
+		return new GmnExplChannel(input_uri, proxyinfo);
 	}
 };
 
@@ -1331,9 +1323,9 @@ OverbiteProtocol.prototype = {
 /* this is implemented somewhat differently from before because we're only
 	doing singleton objects for our Factory and Module */
 
-var OverbiteProtocolFactory = new Object();
+var GmnExplProtocolFactory = new Object();
 
-OverbiteProtocolFactory.createInstance = function (outer, iid) {
+GmnExplProtocolFactory.createInstance = function (outer, iid) {
 	if (outer != null) {
 		throw Components.results.NS_ERROR_NO_AGGREGATION;
 	}
@@ -1344,33 +1336,33 @@ OverbiteProtocolFactory.createInstance = function (outer, iid) {
 		throw Components.results.NS_ERROR_NO_INTERFACE;
 	}
 
-	return new OverbiteProtocol();
+	return new GmnExplProtocol();
 }
 
-var OverbiteModule = new Object();
+var GmnExplModule = new Object();
 
-OverbiteModule.registerSelf = function (compMgr, fileSpec, location, type) {
+GmnExplModule.registerSelf = function (compMgr, fileSpec, location, type) {
 	compMgr = compMgr.
 		QueryInterface(Components.interfaces.nsIComponentRegistrar);
-	compMgr.registerFactoryLocation(OBFFPROT_HANDLER_CID,
-		"Gopher protocol handler", OBFFPROT_HANDLER_CONTRACTID, 
+	compMgr.registerFactoryLocation(GMNXPROT_HANDLER_CID,
+		"Gemini protocol handler", GMNXPROT_HANDLER_CONTRACTID, 
 		fileSpec, location, type);
 }
 
-OverbiteModule.unregisterSelf = function(compMgr, fileSpec, location) {
+GmnExplModule.unregisterSelf = function(compMgr, fileSpec, location) {
 	compMgr = compMgr.
 		QueryInterface(Components.interfaces.nsIComponentRegistrar);
-	compMgr.unregisterFactoryLocation(OBFFPROT_HANDLER_CID, fileSpec);
+	compMgr.unregisterFactoryLocation(GMNXPROT_HANDLER_CID, fileSpec);
 }
 
-OverbiteModule.getClassObject = function (compMgr, cid, iid) {
-	if (cid.equals(OBFFPROT_HANDLER_CID)) {
-		return OverbiteProtocolFactory;
+GmnExplModule.getClassObject = function (compMgr, cid, iid) {
+	if (cid.equals(GMNXPROT_HANDLER_CID)) {
+		return GmnExplProtocolFactory;
 	}
 /*
 	// perhaps someday
-	if (cid.equals(OBFFCNT_HANDLER_CID)) {
-		return OverbiteContentHandlerFactory;
+	if (cid.equals(GMNXCNT_HANDLER_CID)) {
+		return GmnExplContentHandlerFactory;
 	}
 */
 	if (iid.equals(Components.interfaces.nsIFactory)) {
@@ -1379,28 +1371,28 @@ OverbiteModule.getClassObject = function (compMgr, cid, iid) {
 	throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
 }
 
-OverbiteModule.canUnload = function(compMgr) { return true; }
-function NSGetModule(compMgr, fileSpec) { return OverbiteModule; }
+GmnExplModule.canUnload = function(compMgr) { return true; }
+function NSGetModule(compMgr, fileSpec) { return GmnExplModule; }
 
-function OverbiteSetPrefs() {
+function GmnExplSetPrefs() {
 	var prefs = Components.classes["@mozilla.org/preferences-service;1"];
 	var prefserv = prefs.getService(Components.interfaces.nsIPrefService);
 	prefs = prefs.getService(Components.interfaces.nsIPrefBranch);
-	prefs.setIntPref(OBFFBUILDPREF, OBFFBUILD);
+	prefs.setIntPref(GMNXBUILDPREF, GMNXBUILD);
 	prefserv.savePrefFile(null);
 }
 
-OverbiteLog("startup with version "+OBFFVERS+" build "+OBFFBUILD);
+GmnExplLog("startup with version "+GMNXVERS+" build "+GMNXBUILD);
 
 var prefs = Components.classes["@mozilla.org/preferences-service;1"];
 var prefserv = prefs.getService(Components.interfaces.nsIPrefService);
 prefs = prefs.getService(Components.interfaces.nsIPrefBranch);
-if (prefs.getPrefType(OBFFBUILDPREF) != prefs.PREF_INT ||
-		prefs.getIntPref(OBFFBUILDPREF) < OBFFBUILD) {
+if (prefs.getPrefType(GMNXBUILDPREF) != prefs.PREF_INT ||
+		prefs.getIntPref(GMNXBUILDPREF) < GMNXBUILD) {
 
 	// 1.8 does not properly pop windows
 
-	OverbiteSetPrefs();
-	OverbiteLog("set buildmark for Moz1.8");
+	GmnExplSetPrefs();
+	GmnExplLog("set buildmark for Moz1.8");
 }
 
