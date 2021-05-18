@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest">
+	<em:id>overbiteff@floodgap.com</em:id>
+	<em:version>1.1.1424</em:version>
+	<em:type>2</em:type>
+	<em:targetApplication>
+		<Description>
+		<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+		<em:minVersion>2.0</em:minVersion>
+		<em:maxVersion>2.0.0.*</em:maxVersion>
+		</Description>
+	</em:targetApplication>
+	<em:name>OverbiteFF</em:name>
+	<em:description>Enhanced Gopher extension for Firefox, with finger, CSO/ph/qi and whois support.</em:description>
+	<em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	<em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	<em:contributor>All of our testers</em:contributor>
+	<em:contributor>and localizers</em:contributor>
+	<em:iconURL>chrome://overbiteff/content/imascot.png</em:iconURL>
+	<!-- i18n -->
+	<em:localized>
+	<Description>
+	 <em:locale>pl-PL</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>B.J. Stobiecki</em:translator>
+	 <em:description>Udoskonalone rozszerzenie protokołu Gopher dla Firefox, ze wsparciem dla finger, CSO/ph/qi oraz whois.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+	 <em:locale>es-ES</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>Shaine Mata</em:translator>
+	 <em:description>Extension Gopher mejorada para Firefox con soporte de servicios finger, CSO/ph/qi y whois.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+	 <em:locale>nl-NL</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>Jeroen Schot</em:translator>
+	 <em:description>Verbeterde Gopher extensie voor Firefox met finger, CSO/ph/qi en whois ondersteuning.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+	 <em:locale>hu-HU</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>Máté Nagy</em:translator>
+	 <em:description>Fejlett Gopher kiegészítés Firefox-hoz, finger, CSO/ph/qi és whois támogatással.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+         <em:locale>de-DE</em:locale>
+         <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+         <em:translator>Dennis Schulmeister</em:translator>
+         <em:description>Umfangreiche Gopher-Erweiterung für Firefox, mit finger, CSO/ph/qi und whois-Unterstützung.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+	 <em:locale>da-DK</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>Jacob Dahl Pind</em:translator>
+	 <em:description>Forbederet Gopher tilføjelse til Firefox, med finger, CSO/ph/qi og whois understøttelse.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>		
+	<Description>
+	 <em:locale>ru-RU</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>Roman Pavlov</em:translator>
+	 <em:description>Расширение Gopher для Firefox с поддержкой finger, CSO/ph/qi и whois.</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+ 	 <em:locale>ja-JP</em:locale>
+ 	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+ 	 <em:translator>David Meyer</em:translator>
+	 <em:description>改善したGopherクライアントのFirefox拡張機能。finger、CSO/ph/qi、whoisもサポートする。</em:description>
+	</Description>
+	</em:localized>
+	<em:localized>
+	<Description>
+ 	 <em:locale>fr-FR</em:locale>
+ 	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+ 	 <em:translator>Stegozor</em:translator>
+         <em:description>Extension Gopher avancée pour Firefox avec support pour finger, CSO/ph/qi et whois.</em:description>
+        </Description>
+        </em:localized>
+	<em:localized>
+	<Description>
+ 	 <em:locale>tr-TR</em:locale>
+ 	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+ 	 <em:translator>Stegozor</em:translator>
+         <em:description>Firefox için finger, CSO/ph/qi ve whois desteği bulunan gelişmiş Gopher eklentisi.</em:description>
+        </Description>
+        </em:localized>
+	<em:localized>
+	<Description>
+	 <em:locale>nb-NO</em:locale>
+	 <em:name>OverbiteFF</em:name>
+	 <em:creator>Cameron Kaiser/Overbite Project</em:creator>
+	 <em:homepageURL>http://gopher.floodgap.com/overbite/</em:homepageURL>
+	 <em:translator>Cato Auestad</em:translator>
+	 <em:description>Forbedret Gopher-utvidelse til Firefox, med finger, CSO/ph/qi og whois støtte.</em:description>
+	</Description>
+	</em:localized>
+  </Description>
+</RDF>

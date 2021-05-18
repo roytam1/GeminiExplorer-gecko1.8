@@ -1,0 +1,93 @@
+
+
+img.gicon {
+	border: 0px;
+}
+table.gmenu {
+	width: 100%;
+	border: 0px;
+}
+td.gicon {
+	text-align: right;
+	vertical-align: middle;
+	padding: 0px;
+	margin: 1px;
+}
+td.ds {
+	text-align: left;
+	vertical-align: middle;
+	width: 100%;
+	padding: 0px;
+	margin: 1px;
+}
+span.diritem {
+	font-family: monospace;
+}
+span.fileitem {
+	font-family: monospace;
+}
+span.infoitem {
+	font-family: monospace;
+}
+span.searchitem {
+	font-family: monospace;
+	font-weight: bold;
+}
+span.urlitem {
+	font-family: monospace;
+	font-weight: bold;
+}
+span.telnetitem {
+	font-family: monospace;
+	font-weight: bold;
+}
+span.erroritem {
+	font-family: monospace;
+	font-weight: bold;
+}
+span.purl {
+	font-family: monospace;
+	font-weight: bold;
+	font-size: 1.5em;
+}
+div#topbar {
+	display: table-row;
+	padding: 0px;
+	margin: 0px;
+}
+div#urlparent {
+	display: table-cell;
+	width: 100%;
+	text-align: left;
+	padding: 0px;
+	margin: 0px;
+}
+div#urlarea {
+	padding: 8px;
+	margin-bottom: 0px;
+	display: table-cell;
+	vertical-align: text-bottom;
+}
+div#buttonarea {
+	padding: 8px;
+	margin-bottom: 0px;
+	border-style: solid;
+	border-top-width: 1px;
+	border-left-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 0px;
+	display: table-cell;
+	-moz-border-radius-topleft: 15px;
+	-moz-border-radius-topright: 15px;
+}
+div#contentarea {
+	clear: both;
+	padding: 5px;
+	margin-top: 0px;
+	border-style: solid;
+	border-width: 1px;
+	-moz-border-radius-topleft: 15px;
+	-moz-border-radius-bottomleft: 15px;
+	-moz-border-radius-bottomright: 15px;
+}
+
