@@ -101,6 +101,8 @@ const nsIEventQueueService = Components.interfaces.nsIEventQueueService;
 //var badports = [ 20,21,22,23,25,53,69,111,115,137,138,139,443,513,514,548 ];
 var alwayslet = [ 1965 ];
 
+var whereami = ''; // for gemini text to html
+
 /* global function for logging to the error console */
 function GmnExplLog(msg, error) {
 
@@ -140,86 +142,78 @@ function GmnExplQNC(one, two, three) {
 	return(progsink);
 }
 
-// minimal md subset parser, for text/gemini parsing, later
-if(0){
+// string.trim() polyfill 
+if (!String.prototype.trim) {
+	String.prototype.trim = function () {
+		return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+	};
+}
+/***   Regex Markdown Parser by chalarangelo   ***/
+// Replaces 'regex' with 'replacement' in 'str'
+// Curry function, usage: replaceRegex(regexVar, replacementVar) (strVar)
+const replaceRegex = function(regex, replacement){
+	return function(str){
+		return str.replace(regex, replacement);
+	}
+}
+// Regular expressions for gemini text
+const codeBlockRegex = /(\n```\s*)([^]+?.*?[^]+?[^]+?)\1/g;
+const linkRegex = /\n=\>[ \t]*([^ \t\n]+)[ \t]*([^\n]+)?/g;
+const headingRegex = /\n(#+\s*)(.*)/g;
+const blockquoteRegex = /\n(&gt;|\>)(.*)/g;
+const unorderedListRegex = /(\n\s*(\*)\s.*)+/g;
+const paragraphRegex = /\n+(?!<pre>)(?!<h)(?!<ul>)(?!<blockquote)(?!<hr)(?!\t)([^\n]+)\n/g;
 
-// convert() - Our lite MD parser
-
-function convert() {
-  var mdt = document.getElementById("md").value;
-  // First we parse the blocks to prevent them to be parsed later on
-  parseCodeBlocks(mdt);
-  // Then we deal with the remaning text, which are paragraphs
-  parseParagraphs();
-  resultSrcTA.value = resultDiv.innerHTML;
+// Replacer functions for Markdown
+const codeBlockReplacer = function(fullMatch, tagStart, tagContents){
+	return '\n<pre>' + tagContents.trim().replace(/\>/g,"&gt;").replace(/\</g,"&lt;").replace(/\`/g,"&#96;").replace(/\*/g,"&#42;").replace(/\~/g,"&#126;").replace(/\n/g,"<br/>") + '</pre>';
+}
+const linkReplacer = function(fullMatch, tagURL, tagTitle){
+	// TODO FIXME ugly hack on using shared global object `whereami`
+	return '<a href="' + (tagURL.indexOf(':') == -1 ? (tagURL.substr(0,1) == '/' ? whereami.substr(0,whereami.indexOf('/', 9)) + tagURL : whereami + tagURL) : tagURL) + '">' + (tagTitle?tagTitle:tagURL) + '</a><br/>';
+}
+const headingReplacer = function(fullMatch, tagStart, tagContents){
+	return '\n<h' + tagStart.trim().length + '>' + tagContents + '</h' + tagStart.trim().length + '>';
+}
+const blockquoteReplacer = function(fullMatch, tagStart, tagContents){
+	return '\n<blockquote>' + tagContents + '</blockquote>';
+}
+const unorderedListReplacer = function(fullMatch){
+	var items = '';
+	var _array = fullMatch.trim().split('\n');
+	for( var _i = 0; _i < _array.length; _i++) { items += '<li>' + _array[_i].substring(2) + '</li>'; }
+	return '\n<ul>' + items + '</ul>';
+}
+const paragraphReplacer = function(fullMatch, tagContents){
+	return '<p>' + tagContents + '</p>';
 }
 
-// This function simply performs a regexp substitution on a given text
-// and inject it into the result HTML element (resultDiv)
-// as an inner HTML string to let the browser parting it
+// Rules for Markdown parsing (use in order of appearance for best results)
+const replaceCodeBlocks = replaceRegex(codeBlockRegex, codeBlockReplacer);
+const replaceLinks = replaceRegex(linkRegex, linkReplacer);
+const replaceHeadings = replaceRegex(headingRegex, headingReplacer);
+const replaceBlockquotes = replaceRegex(blockquoteRegex, blockquoteReplacer);
+const replaceUnorderedLists = replaceRegex(unorderedListRegex, unorderedListReplacer);
+const replaceParagraphs = replaceRegex(paragraphRegex, paragraphReplacer);
 
-function parseCodeBlocks(text) {
-  const codeblock = /```\s*([^]+?.*?[^]+?[^]+?)```/g;
-  resultDiv.innerHTML = 
-    text.replace(codeblock, '<pre><code>$1</code></pre>');
+// Replacement rule order function for Markdown
+// Do not use as-is, prefer parseMarkdown as seen below
+const replaceGeminiText = function(str) {
+  return replaceParagraphs(replaceUnorderedLists(
+		replaceBlockquotes(
+			replaceHeadings(replaceLinks(
+				replaceCodeBlocks(str)
+      ))
+    )
+	));
+}
+// Parser for Markdown (fixes code, adds empty lines around for parsing)
+// Usage: parseMarkdown(strVar)
+const parseGeminiText = function(str) {
+//GmnExplLog(("parseGeminiText str="+str));
+	return replaceGeminiText('\n' + str + '\n').trim();
 }
 
-// This function replaces remaining text nodes with paragraphs
-// (The tricky part)
-
-function parseParagraphs() {
-  var nodes = resultDiv.childNodes;
-  // Looping through the nodes
-  for (var i = 0; i < nodes.length; i++) {
-    // If the current node isn't a text node, next!
-    if (nodes[i].nodeType != 3) continue;
-    // Converting the current text node as an array of <P> elements
-    ps = createPElementFromMDParagraphs(nodes[i].nodeValue);
-    
-    
-    // Reverse looping through the <P> elements
-    // Since we insert them right after the parsed text node
-    for (var j = ps.length -1 ; j > -1 ; j--) {
-      resultDiv.insertBefore(ps[j], nodes[i].nextSibling)
-    }
-    // We've done with paragraph insertion, time to remove
-    // the parsed text node
-    resultDiv.removeChild(nodes[i]);
-    // Updating i : we added n paragraph and removed one text node
-    i += ps.length - 1;
-  }
-}
-
-// This function return for a given text a <P> array representing
-// the content
-
-function createPElementFromMDParagraphs(text) {
-  const paragraph = /(.+)((\r?\n.+)*)/g;
-  const code = /`(.*?)`/g;
-  const link = /\[(.*?)\]\((.*?)\)/g;
-  var ps = [];
-  var matches;
-  
-  // We loop through paragraph regex matches
-  // For each match, we create a <P> element and we push it
-  // into the result array
-  while ((matches = paragraph.exec(text)) !== null) {
-
-    var p = document.createElement("p");
-    p.appendChild(document.createTextNode(matches[1]));
-    
-    // And we have here an opportunity to format the inline elements
-    // Note that links will be parsed inside a code element and will work
-    p.innerHTML = p.innerHTML.replace(code, '<code>$1</code>');
-    p.innerHTML = p.innerHTML.replace(link, '<a href="$2">$1</a>');
-
-    ps.push(p);
-  }
-
-  return ps;
-}
-
-}
 
 // function for redirecting to new location
 function GmnExplRedirectToURL(url) {
@@ -262,14 +256,32 @@ function GmnExplPrompt(prompt, isPassword) {
 }
 
 function GmnExplDataHandler(request, meta, buf) {
+GmnExplLog(("GmnExplDataHandler meta='"+meta+"'"));
+	whereami = request.name;
+
+	if (whereami.asciiSpec) { // is this actually an nsIURI? YES!!
+		whereami = whereami.asciiSpec;
+	}
+	if (whereami && whereami.length) {
+		if (whereami.indexOf("?") > -1)
+			whereami = ((whereami.split("?"))[0]);
+	}
+	whereami = whereami.substr(0, whereami.lastIndexOf('/')+1);
+
 	// init the channel with data and content type
 	var chan = request.QueryInterface(nsIChannel);
 
-	if(meta != "text/gemini") {
+	if(meta.match(/^text\/gemini/)) {
+		if (chan)
+			chan.contentType = "text/html";
+
+		title = buf.match(/^#\s*(.*?)\n/);
+		if(title.length) title=""+title[1];
+
+		return '<html><head><base href="'+whereami+'"/>'+(title ? '<title>'+title+'</title>' : '')+'</head><body>'+parseGeminiText(buf.replace(/\</g,"&lt;"))+'</body></html>';
+	} else {
 		if (chan)
 			chan.contentType = meta;
-	} else {
-			chan.contentType = "text/html";
 	}
 
 	return buf;
@@ -439,7 +451,7 @@ GmnExplLog(("GmnExplListener::onDataAvailable _status_line="+this._status_line))
 				this._status_num_end = this._status_line.indexOf(" ");
 				if (this._status_end > 0) {
 					this._status_num = parseInt(this._status_line.substr(0,this._status_num_end));
-					this._status_meta = this._status_line.substr(this._status_num_end);
+					this._status_meta = this._status_line.substr(this._status_num_end+1);
 					if(this._status_num == 20) {
 						// content-type is in meta!
 						if(this._status_meta != "text/gemini") {
@@ -1004,7 +1016,41 @@ if(0){
 		}
 		this.contentType = c;
 }
-		this.contentType = 'text/html';
+else {
+		var basepath = input_uri.path.replace(/#.*$/,"").replace(/\?.*$/,"");
+		var basename = basepath.substr(basepath.lastIndexOf("/")+1);
+		// guess content type from filename
+		// taken from netwerk/mime/public/nsMimeTypes.h
+		if (basepath.match(/\.gmi$/i) || basepath.match(/\/$/) || !basename.match(/\./))
+			c = 'text/html' ;
+		else if (basepath.match(/\.html?$/i))
+			c = 'text/html' ;
+		else if (basepath.match(/\.jpe?g$/i))
+			c = 'image/jpeg' ;
+		else if (basepath.match(/\.gif$/i))
+			c = 'image/gif' ; // grrRRR! use 'g'!!
+		else if (basepath.match(/\.xbm$/i))
+			c = 'image/x-xbitmap' ;
+		else if (basepath.match(/\.png$/i))
+			c = 'image/png' ;
+		else if (basepath.match(/\.svg$/i))
+			c = 'image/svg+xml' ;
+		else if (basepath.match(/\.bmp$/i))
+			c = 'image/bmp' ;
+		else if (basepath.match(/\.icon?$/i))
+			c = 'image/x-icon' ;
+		else if (basepath.match(/\.tiff?$/i))
+			c = 'image/tiff' ;
+		else if (basepath.match(/\.pdf$/i))
+			c = 'application/pdf' ;
+		else if (basepath.match(/\.txt$/i))
+			c = 'text/plain' ;
+		else
+			c = 'application/octet-stream';
+
+		this.contentType = c;
+}
+		//this.contentType = 'text/html';
 
 		GmnExplLog(("channel initialized: "+
 			this._host + " " +
@@ -1319,6 +1365,7 @@ GmnExplProtocol.prototype = {
 		if (proxyinfo)
 			GmnExplLog("proxy is: "+proxyinfo);
 
+if(0){
 		// handle hURLs directly here (and reject Javascript
 			// and data:)
 		if (input_uri.path.match(/^\/?h\/?URL:.+/)) {
@@ -1410,7 +1457,8 @@ GmnExplProtocol.prototype = {
 			ob.csoargs = query.value;
 			return ob;
 		}
-			
+}
+
 		// make chrome channel either to images or CSS if
 		// input_uri is "gemini:///internal-" and no / and
 		// extension is .png or .css
@@ -1474,6 +1522,7 @@ GmnExplProtocol.prototype = {
 				null, null);
 		}
 
+if(0){
 		// otherwise
 		// immediately reject "pseudo" item types we don't handle
 		// do this here because it traps internal URLs
@@ -1486,6 +1535,7 @@ GmnExplProtocol.prototype = {
 			throw Components.results.NS_ERROR_ABORT;
 			return null;
 		}
+}
 
 		// silently reject port numbers we will never allow
 		//if (badports.indexOf(input_uri.port) > -1) {
