@@ -140,14 +140,143 @@ function GmnExplQNC(one, two, three) {
 	return(progsink);
 }
 
-/*
- * the dotless object handles things like svg and xml that barf on the
- * terminal period that certain servers emit, and is also nice for
- * text/plain.
-*/
+// minimal md subset parser, for text/gemini parsing, later
+if(0){
 
-function GmnExplDotless() { }
-GmnExplDotless.prototype = {
+// convert() - Our lite MD parser
+
+function convert() {
+  var mdt = document.getElementById("md").value;
+  // First we parse the blocks to prevent them to be parsed later on
+  parseCodeBlocks(mdt);
+  // Then we deal with the remaning text, which are paragraphs
+  parseParagraphs();
+  resultSrcTA.value = resultDiv.innerHTML;
+}
+
+// This function simply performs a regexp substitution on a given text
+// and inject it into the result HTML element (resultDiv)
+// as an inner HTML string to let the browser parting it
+
+function parseCodeBlocks(text) {
+  const codeblock = /```\s*([^]+?.*?[^]+?[^]+?)```/g;
+  resultDiv.innerHTML = 
+    text.replace(codeblock, '<pre><code>$1</code></pre>');
+}
+
+// This function replaces remaining text nodes with paragraphs
+// (The tricky part)
+
+function parseParagraphs() {
+  var nodes = resultDiv.childNodes;
+  // Looping through the nodes
+  for (var i = 0; i < nodes.length; i++) {
+    // If the current node isn't a text node, next!
+    if (nodes[i].nodeType != 3) continue;
+    // Converting the current text node as an array of <P> elements
+    ps = createPElementFromMDParagraphs(nodes[i].nodeValue);
+    
+    
+    // Reverse looping through the <P> elements
+    // Since we insert them right after the parsed text node
+    for (var j = ps.length -1 ; j > -1 ; j--) {
+      resultDiv.insertBefore(ps[j], nodes[i].nextSibling)
+    }
+    // We've done with paragraph insertion, time to remove
+    // the parsed text node
+    resultDiv.removeChild(nodes[i]);
+    // Updating i : we added n paragraph and removed one text node
+    i += ps.length - 1;
+  }
+}
+
+// This function return for a given text a <P> array representing
+// the content
+
+function createPElementFromMDParagraphs(text) {
+  const paragraph = /(.+)((\r?\n.+)*)/g;
+  const code = /`(.*?)`/g;
+  const link = /\[(.*?)\]\((.*?)\)/g;
+  var ps = [];
+  var matches;
+  
+  // We loop through paragraph regex matches
+  // For each match, we create a <P> element and we push it
+  // into the result array
+  while ((matches = paragraph.exec(text)) !== null) {
+
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(matches[1]));
+    
+    // And we have here an opportunity to format the inline elements
+    // Note that links will be parsed inside a code element and will work
+    p.innerHTML = p.innerHTML.replace(code, '<code>$1</code>');
+    p.innerHTML = p.innerHTML.replace(link, '<a href="$2">$1</a>');
+
+    ps.push(p);
+  }
+
+  return ps;
+}
+
+}
+
+// function for redirecting to new location
+function GmnExplRedirectToURL(url) {
+GmnExplLog(("GmnExplRedirectToURL url="+url));
+	// tell browser to redirect
+	var wm = Components
+		.classes["@mozilla.org/appshell/window-mediator;1"]
+		.getService(Components
+			.interfaces
+			.nsIWindowMediator);
+	wm.getMostRecentWindow('navigator:browser')
+		.getBrowser().webNavigation.loadURI(
+			url, 0, null, null, null);
+}
+
+// 
+function GmnExplPrompt(prompt, isPassword) {
+	var prompter = Components
+		.classes["@mozilla.org/embedcomp/prompt-service;1"]
+		.getService(Components
+			.interfaces.nsIPromptService);
+	// why does prompt need a null object for the
+	// checkbox when we aren't using it??
+	var chequestub = { value : false };
+	var query = { value : '' };
+	var rv;
+	// we will accept "blank" responses -- could be valid
+	if(!isPassword) {
+		rv = prompter.prompt(null,
+			"Gemini Explorer",
+			prompt,
+			query, null, chequestub);
+	} else {
+		rv = prompter.promptPassword(null,
+			"Gemini Explorer",
+			prompt,
+			query, null, chequestub);
+	}
+	return query.value;
+}
+
+function GmnExplDataHandler(request, meta, buf) {
+	// init the channel with data and content type
+	var chan = request.QueryInterface(nsIChannel);
+
+	if(meta != "text/gemini") {
+		if (chan)
+			chan.contentType = meta;
+	} else {
+			chan.contentType = "text/html";
+	}
+
+	return buf;
+}
+
+function GmnExplListener() { }
+GmnExplListener.prototype = {
 
 	// my stuff
 	_contentType: null,
@@ -155,7 +284,11 @@ GmnExplDotless.prototype = {
 	_context : null,
 	_buf : '',
 	_sstream : null,
-
+	_status_end : -1,
+	_status_line : null,
+	_status_num : 0,
+	_status_meta : null,
+	_status_num_end : -1,
 	// useful internal functions
 
 	// feed the beast (i.e., the listener on the other end)
@@ -186,41 +319,86 @@ GmnExplDotless.prototype = {
 	onStartRequest : function(request, context) {
 		// init the channel with data and content type
 
-		var chan = request.QueryInterface(nsIChannel);
+		/*var chan = request.QueryInterface(nsIChannel);
 		if (chan)
-			chan.contentType = this._contentType;
+			chan.contentType = this._contentType;*/
 				// from asyncConvertData
 		this._context = context;
 		this._buf = '';
 		this._listener.onStartRequest(request, context);
 	},
 
-	/* this is a very simple construct with a rolling buffer. essentially
-	   we start by priming the pump with a small one character output,
-	   then delaying and buffering data until the last pulse of data and
-	   onStopRequest gets called, which if there is a final dot, should
-	   be in the leftover buffer. */
-
 	onStopRequest : function(request, context, status) {
-		// trim the end of _buf -- drop \n, \r, whitespace and . ONLY
-		// stop when we get to anything else
-		var dontstop = 1;
-		var lastchar = '';
+GmnExplLog(("GmnExplListener::onStopRequest _buf.length="+this._buf.length));
 
-		while(this._buf.length && dontstop && 
-			(lastchar = this._buf.charAt((this._buf.length)-1)) &&(
-					lastchar == "\n" ||
-					lastchar == "\r" ||
-					lastchar == "\t" ||
-					lastchar == " " ||
-					lastchar == "." ||
-				0)) {
-			this._buf = this._buf.substr(0, (this._buf.length)-1);
-			dontstop = (lastchar == ".") ? 0 : 1;
+		var buf;
+		var whoami = request.name;
+
+		if (whoami.asciiSpec) { // is this actually an nsIURI? YES!!
+			whoami = whoami.asciiSpec;
 		}
+		if (whoami && whoami.length) {
+			if (whoami.indexOf("?") > -1)
+				whoami = ((whoami.split("?"))[0]);
+		}
+
+		var chan = request.QueryInterface(nsIChannel);
+		if (chan)
+			chan.contentType = this._contentType;
+
+		// everything is read in _buf, let's process it
+		// buf = "<status-code-from-10-to-62><SP><META>\r\n<DATA>"
+		//var _status_end = this._buf.indexOf("\r\n");
+		if (this._status_end > 0) {
+GmnExplLog(("GmnExplListener::onStopRequest _status_line="+this._status_line));
+			/* these are done in onDataAvailable
+			var _status_line = this._buf.substr(0,_status_end);
+			var _status_num, _status_meta, _status_num_end = _status_line.indexOf(" ");*/
+			if (this._status_end > 0) {
+				/*_status_num = parseInt(_status_line.substr(0,_status_num_end));
+				_status_meta = _status_line.substr(_status_num_end);*/
+				if (this._status_num < 10 || this._status_num > 99) {
+					buf = "Error: Gemini server returned malformed result.";
+				} else {
+					switch(this._status_num) {
+						case 10: // input (plain text)
+						case 11: // input (sensitive text)
+							var prompt_result = GmnExplPrompt(this._status_meta, (this._status_num == 11));
+							GmnExplRedirectToURL(whoami+"?"+encodeURI(prompt_result));
+						break;
+						case 20: // success (like HTTP 200)
+							//if(this._status_meta != "text/gemini") this._contentType = this._status_meta;
+							buf = GmnExplDataHandler(request, this._status_meta, this._buf.substr(this._status_end+2)); // stripped CRLF after status line
+							// MORE WORK TODO
+							//buf = this._buf;
+						break;
+						case 30: // temporary redirect (like HTTP 302)
+						case 31: // perment redirect (like HTTP 301)
+							GmnExplLog("URL REDIRECT: "+this._status_meta);
+							// reject dangerous URL schemes
+							if (this._status_meta.match(/^(javascript|data)\:/i)) {
+								buf = "Gemini server wanted to redirect you to address \""+this._status_meta+"\" which is rejected for safety reasons.";
+							} else {
+								GmnExplRedirectToURL(this._status_meta);
+							}
+						break;
+						default: // other codes handled here
+						buf = "Gemini server returned status code "+this._status_num+" ("+this._status_meta+")";
+					}
+					// MORE WORK TODO
+					//buf = this._buf;
+				}
+			} else {
+				buf = "Error: Gemini server returned malformed result.";
+			}
+		} else {
+			// we get malformed result
+			// TODO
+			buf = "Error: Gemini server returned malformed result.";
+		}
+
 		this._feedBeast(request, this._listener,
-			this._context, this._buf)
-				if (this._buf.length);	
+			this._context, buf);	
 		this._buf = '';
 		this._listener.onStopRequest(request, this._context, status);
 		this._listener = null;
@@ -228,6 +406,12 @@ GmnExplDotless.prototype = {
 		if (this._sstream)
 			this._sstream.close();
 		this._sstream = null;
+
+		this._status_end = -1;
+		this._status_line = null;
+		this._status_num = 0;
+		this._status_meta = null;
+		this._status_num_end = -1;
 	},
 
 	// nsIStreamListener
@@ -244,21 +428,42 @@ GmnExplDotless.prototype = {
 			this._sstream.init(stream);
 		}
 		nbuf = this._sstream.read(count);
-		if (this._buf.length) {
+GmnExplLog(("GmnExplListener::onDataAvailable offset="+offset));
+
+		if (!offset) {
+			// handle content-type early
+			this._status_end = nbuf.indexOf("\r\n");
+			if (this._status_end > 0) {
+				this._status_line = nbuf.substr(0,this._status_end);
+GmnExplLog(("GmnExplListener::onDataAvailable _status_line="+this._status_line));
+				this._status_num_end = this._status_line.indexOf(" ");
+				if (this._status_end > 0) {
+					this._status_num = parseInt(this._status_line.substr(0,this._status_num_end));
+					this._status_meta = this._status_line.substr(this._status_num_end);
+					if(this._status_num == 20) {
+						// content-type is in meta!
+						if(this._status_meta != "text/gemini") {
+							this._contentType = this._status_meta;
+						} else {
+							this._contentType = "text/html";
+						}
+						// init the channel with data and content type
+						var chan = request.QueryInterface(nsIChannel);
+
+						if (chan) {
+							chan.contentType = this._contentType;
+						}
+					}
+				}
+			}
+		}
+
+		/*if (this._buf.length) {
 			this._feedBeast(request, this._listener, this._context,
 				this._buf);
 			this._buf = nbuf;
-		} else {
-			if (count == 1) { // degenerate case
-				this._feedBeast(request, this._listener,
-					this._context, nbuf);
-				// come back for more
-			} else {
-				this._buf = nbuf.substr(1);
-				this._feedBeast(request, this._listener,
-					this._context, nbuf.substr(0,1));
-			}
-		}
+		}*/
+		this._buf += nbuf;
 	},
 
 	// nsIStreamConverter
@@ -799,7 +1004,7 @@ if(0){
 		}
 		this.contentType = c;
 }
-		this.contentType = 'text/plain';
+		this.contentType = 'text/html';
 
 		GmnExplLog(("channel initialized: "+
 			this._host + " " +
@@ -880,35 +1085,16 @@ if(0){
 			GmnExplLog(("now with dirconv: "+dirconv));
 		}	
 }
-		// dotless conversion
-		var prefs = Components
-			.classes["@mozilla.org/preferences-service;1"]
-			.getService(Components.interfaces.nsIPrefBranch);
-		var do_dotless = true;
-		// first load hidden preference for dotless
-		if (prefs.getPrefType(GMNXDOTLESSPREF) == prefs.PREF_BOOL) {
-			do_dotless = prefs.getBoolPref(GMNXDOTLESSPREF);
-			GmnExplLog(("dotless has been set to "+do_dotless));
-			// otherwise default is true
-		} else {
-			GmnExplLog(("no "+GMNXDOTLESSPREF+" not bool"));
-		}
-		if (do_dotless && (
-				this.contentType.match(/^text\//) ||
-				this.contentType == 'application/xml' ||
-				this.contentType == 'image/svg+xml' ||
-			0)) {
-			GmnExplLog("this type needs to be dotless");
-			var dotless = new GmnExplDotless();
-			dotless.asyncConvertData(
-				'generic/dotless-type',
-				this.contentType,
-				this._listener,
-				this._context);
-			this._listener = dotless;
-			this._context = null;
-			GmnExplLog(("now with dotless: "+dotless));
-		}
+
+		var gelistener = new GmnExplListener();
+		gelistener.asyncConvertData(
+			'application/octet-stream',
+			this.contentType,
+			this._listener,
+			this._context);
+		this._listener = gelistener;
+		this._context = null;
+
 		GmnExplLog(("transport service for "+
 			this._host + " initialized"));
 		return Components.results.NS_OK;
