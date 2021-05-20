@@ -101,8 +101,6 @@ const nsIEventQueueService = Components.interfaces.nsIEventQueueService;
 //var badports = [ 20,21,22,23,25,53,69,111,115,137,138,139,443,513,514,548 ];
 var alwayslet = [ 1965 ];
 
-var whereami = ''; // for gemini text to html
-
 /* global function for logging to the error console */
 function GmnExplLog(msg, error) {
 
@@ -169,8 +167,7 @@ const codeBlockReplacer = function(fullMatch, tagStart, tagContents){
 	return '\n<pre>' + tagContents.trim().replace(/\>/g,"&gt;").replace(/\</g,"&lt;").replace(/\`/g,"&#96;").replace(/\*/g,"&#42;").replace(/\~/g,"&#126;").replace(/\n/g,"<br/>") + '</pre>';
 }
 const linkReplacer = function(fullMatch, tagURL, tagTitle){
-	// TODO FIXME ugly hack on using shared global object `whereami`
-	return '<a href="' + (tagURL.indexOf(':') == -1 ? (tagURL.substr(0,1) == '/' ? whereami.substr(0,whereami.indexOf('/', 9)) + tagURL : whereami + tagURL) : tagURL) + '">' + (tagTitle?tagTitle:tagURL) + '</a><br/>';
+	return '<div><a href="' + tagURL + '">' + (tagTitle?tagTitle:tagURL) + '</a></div>';
 }
 const headingReplacer = function(fullMatch, tagStart, tagContents){
 	return '\n<h' + tagStart.trim().length + '>' + tagContents + '</h' + tagStart.trim().length + '>';
@@ -257,7 +254,7 @@ function GmnExplPrompt(prompt, isPassword) {
 
 function GmnExplDataHandler(request, meta, buf) {
 GmnExplLog(("GmnExplDataHandler meta='"+meta+"'"));
-	whereami = request.name;
+	var whereami = request.name;
 
 	if (whereami.asciiSpec) { // is this actually an nsIURI? YES!!
 		whereami = whereami.asciiSpec;
@@ -278,7 +275,40 @@ GmnExplLog(("GmnExplDataHandler meta='"+meta+"'"));
 		title = buf.match(/^#\s*(.*?)\n/);
 		if(title.length) title=""+title[1];
 
-		return '<html><head><base href="'+whereami+'"/>'+(title ? '<title>'+title+'</title>' : '')+'</head><body>'+parseGeminiText(buf.replace(/\</g,"&lt;"))+'</body></html>';
+		return "<html>\n"+
+			"<head>\n"+
+			"<base href=\""+whereami+"\"/>\n"+
+			(title ? '<title>'+title+"</title>\n" : '')+
+			"<script>\n"+
+			"function getBaseURL(){\n"+
+			"  var elem=document.getElementsByTagName('base')[0];\n"+
+			"  if (typeof(elem) != 'undefined' && elem != null){\n"+
+			"     return elem.href;\n"+
+			"  }\n"+
+			"  return window.location.substr(0,window.location.lastIndexOf('/')+1);\n"+
+			"}\n"+
+			"function fixLinks() {\n"+
+			"  var baseURI=getBaseURL();\n"+
+			"  var links=document.getElementsByTagName('A');\n"+
+			"  for (var _i=0; _i < links.length; _i++) {\n"+
+			"    if (links[_i].href.indexOf(':') == -1) {\n"+
+			"      if (links[_i].href.indexOf('/') == 0) {\n"+
+			"        links[_i].href=baseURI.substr(0,baseURI.indexOf('/',9))+links[_i].getAttribute('href');\n"+
+			"      } else {\n"+
+			"        links[_i].href=baseURI+links[_i].getAttribute('href');\n"+
+			"      }\n"+
+			"    }\n"+
+			"  }\n"+
+			"}\n"+
+			"</script>\n"+
+			"</head>\n"+
+			"<body>\n"+
+			parseGeminiText(buf.replace(/\</g,"&lt;"))+
+			"<script>\n"+
+			"fixLinks()\n"+
+			"</script>\n"+
+			"</body>\n"+
+			'</html>';
 	} else {
 		if (chan)
 			chan.contentType = meta;
